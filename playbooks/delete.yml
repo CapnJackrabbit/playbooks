@@ -1,0 +1,26 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+
+    - name: "Obtendo token"
+      ansible.builtin.uri:
+        url: http://localhost:8000/token/
+        method: POST
+        body: "{{ lookup ('ansible.builtin.file', 'auth') }}"
+        body_format: json
+      register: token
+
+    - name: "Excluindo uma entrada"
+      ansible.builtin.uri:
+        url: http://localhost:8000/livros/3da7b405-ff07-43b6-80a8-567c12ea24fc/
+        method: DELETE
+        headers:
+          Authorization: "Bearer {{token.json.access}}"
+        status_code: 204
+      register: resposta
+
+    - debug:
+        var: resposta

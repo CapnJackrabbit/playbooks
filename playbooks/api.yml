@@ -1,0 +1,39 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+
+    - name: "Obtendo token"
+      ansible.builtin.uri:
+        url: http://localhost:8000/token/
+        method: POST
+        body: "{{ lookup ('ansible.builtin.file', 'auth') }}"
+        body_format: json
+      register: token
+
+    - debug:
+        var: token.json.access
+
+    - name: "Postando"
+      ansible.builtin.uri:
+        url: http://localhost:8000/livros/
+        method: POST
+        headers:
+          Authorization: "Bearer {{token.json.access}}"
+        body: "{{ lookup ('ansible.builtin.file', 'livro.json') }}"
+        body_format: json
+        status_code: 201
+      ignore_errors: true
+
+    - name: "Obtendo"
+      ansible.builtin.uri:
+        url: http://localhost:8000/livros
+        method: GET
+        headers:
+          Authorization: "Bearer {{token.json.access}}"
+      register: retorno
+
+    - debug:
+        var: retorno
